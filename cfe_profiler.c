@@ -35,7 +35,7 @@ const int MAX_HASH_LEN = 1024;
 
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
-  char *key;      // Hash of the 6th next fields
+  char *key;      // Hash of the 4th next fields
   char *namespace;
   char *bundletype;
   char *bundle;
