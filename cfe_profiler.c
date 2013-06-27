@@ -93,7 +93,7 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
 void print_stats() {
 
   bundle_stats *bs = NULL;
-  uint64_t total_ticks;
+  uint64_t total_ticks = 0;
   float p;
 
   // Get CPU ticks used overall
