@@ -94,7 +94,6 @@ void print_stats() {
 
   bundle_stats *bs = NULL;
   uint64_t total_ticks = 0;
-  float p;
 
   // Get CPU ticks used overall
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
@@ -109,13 +108,12 @@ void print_stats() {
   HASH_SORT(bundles_stats, sort_by_ticks);
 
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
-    p = (bs->ticks / (float) total_ticks) * 100;
 
     printf("%6.2f %10s %10s %20s\n",
-        p,
-        bs->namespace,
-        bs->bundletype,
-        bs->bundle);
+      ((float) bs->ticks / total_ticks * 100),
+      bs->namespace,
+      bs->bundletype,
+      bs->bundle);
   }
 }
 
