@@ -35,13 +35,13 @@ const int MAX_HASH_LEN = 1024;
 
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
-	char *key;      // Hash of the 6th next fields
-	char *namespace;
-	char *bundletype;
-	char *bundle;
-	char *agentsubtype;
-	uint64_t ticks;
-	UT_hash_handle hh;
+  char *key;      // Hash of the 6th next fields
+  char *namespace;
+  char *bundletype;
+  char *bundle;
+  char *agentsubtype;
+  uint64_t ticks;
+  UT_hash_handle hh;
 };
 
 bundle_stats *bundles_stats = NULL;
@@ -61,6 +61,7 @@ uint64_t rdtsc(void)
 
 // For each bundle, add an entry to a global hash
 void add_bundle_call(Promise *pp, uint64_t ticks) {
+
   bundle_stats *bs = NULL;
   char *hash = NULL;
 
@@ -69,9 +70,9 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
     perror("Cannot allocate memory for hash\n");
 
   snprintf(hash, MAX_HASH_LEN, "%s%s%s",
-      pp->namespace,
-      pp->bundletype,
-      pp->bundle);
+    pp->namespace,
+    pp->bundletype,
+    pp->bundle);
 
   HASH_FIND_STR(bundles_stats, hash, bs);
 
