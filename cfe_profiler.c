@@ -40,16 +40,15 @@ struct _bundle_stats {
   char *bundletype;
   char *bundle;
   char *agentsubtype;
-  uint64_t ticks;
+  uint64_t time_us;   // Total time taken is µs
   UT_hash_handle hh;
 };
 
 bundle_stats *bundles_stats = NULL;
 
 void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res);
-void add_bundle_call(Promise *pp, uint64_t ticks);
-int sort_by_ticks(bundle_stats *a, bundle_stats *b);
-
+void add_bundle_call(Promise *pp, uint64_t timing);
+int sort_by_time(bundle_stats *a, bundle_stats *b);
 
 void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res) {
 
@@ -63,7 +62,7 @@ void timespec_substract(const struct timespec *x, const struct timespec *y, stru
 }
 
 // For each bundle, add an entry to a global hash
-void add_bundle_call(Promise *pp, uint64_t ticks) {
+void add_bundle_call(Promise *pp, uint64_t timing_us) {
 
   bundle_stats *bs = NULL;
   char *hash = NULL;
@@ -88,10 +87,10 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
     bs->namespace = strdup(pp->namespace);
     bs->bundletype = strdup(pp->bundletype);
     bs->bundle = strdup(pp->bundle);
-    bs->ticks = ticks;
+    bs->time_us = timing_us;
     HASH_ADD_KEYPTR(hh, bundles_stats, bs->key, strlen(bs->key), bs);
   } else {
-    bs->ticks += ticks;
+    bs->time_us += timing_us;
     free(hash);
   }
 }
@@ -100,38 +99,40 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
 void print_stats() {
 
   bundle_stats *bs = NULL;
-  uint64_t total_ticks = 0;
+  uint64_t total_time = 0;
 
   // Get CPU ticks used overall
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
-    total_ticks += bs->ticks;
+    total_time += bs->time_us;
   }
 
   printf("\nCfe-profiler-0.1: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
-  printf("\n*** Sorted by ticks - total CPU ticks: %lu ***\n", total_ticks);
-  printf("%6s %10s %10s %20s\n",
-      "%CPU","Namespace", "Type", "Bundle");
+  printf("\n*** Sorted by CPU time - total CPU time: %.2fs ***\n", (float) total_time / 1000000);
+  printf("%%     time(s)   Namespace     Type      Bundle\n");
 
-  HASH_SORT(bundles_stats, sort_by_ticks);
+  HASH_SORT(bundles_stats, sort_by_time);
 
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
 
-    printf("%6.2f %10s %10s %20s\n",
-      ((float) bs->ticks / total_ticks * 100),
+    printf("%-7.2f %-9.1f %-10s %-10s %-20s\n",
+      (float) bs->time_us / total_time * 100,
+      (float) bs->time_us / 1000000,
       bs->namespace,
       bs->bundletype,
       bs->bundle);
   }
 }
 
-// Helper function to sort hash by ticks
-int sort_by_ticks(bundle_stats *a, bundle_stats *b) {
-  return (a->ticks <= b->ticks);
+// Helper function to sort hash by time taken
+int sort_by_time(bundle_stats *a, bundle_stats *b) {
+  return (a->time_us <= b->time_us);
 }
 
 // Our version of ExpandPromise(): collect informations about promise, then run real ExpandPromise
 void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context) {
 
+  struct timespec start, end, diff;
+  uint64_t us = 0;
   void *(*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
 
   // Get a pointer to the real ExpandPromise() function, to call it later
@@ -142,8 +143,14 @@ void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, voi
     exit(EXIT_FAILURE);
   }
 
+  clock_gettime(CLOCK_MONOTONIC, &start);
   ExpandPromise_orig(agent, scopeid, pp, fnptr, report_context);
+  clock_gettime(CLOCK_MONOTONIC, &end);
 
+  // Compute time taken by the execution in microseconds
+  timespec_substract(&end, &start, &diff);
+  us = diff.tv_sec * 1000000 + diff.tv_nsec / 1000;
+  add_bundle_call(pp, us);
 }
 
 // Our version of GenericDeInitialize(): a cleanup function we use to fire the output of statistics
