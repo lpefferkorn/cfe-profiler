@@ -137,6 +137,10 @@ void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, voi
   // Get a pointer to the real ExpandPromise() function, to call it later
   ExpandPromise_orig = dlsym(RTLD_NEXT, "ExpandPromise");
 
+  if (ExpandPromise_orig == NULL) {
+    fprintf(stderr, "Cannot find ExpandPromise symbol, exiting...\n");
+    exit(EXIT_FAILURE);
+  }
 
   ExpandPromise_orig(agent, scopeid, pp, fnptr, report_context);
 
