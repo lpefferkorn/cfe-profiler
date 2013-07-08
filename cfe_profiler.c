@@ -129,19 +129,13 @@ int sort_by_ticks(bundle_stats *a, bundle_stats *b) {
 // Our version of ExpandPromise(): collect informations about promise, then run real ExpandPromise
 void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context) {
 
-  uint64_t start;
   void *(*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
 
   // Get a pointer to the real ExpandPromise() function, to call it later
   ExpandPromise_orig = dlsym(RTLD_NEXT, "ExpandPromise");
 
-  // Get current CPU ticks
-  start = rdtsc();
 
   ExpandPromise_orig(agent, scopeid, pp, fnptr, report_context);
-
-  // Collect information about the execution
-  add_bundle_call(pp, rdtsc() - start);
 
 }
 
