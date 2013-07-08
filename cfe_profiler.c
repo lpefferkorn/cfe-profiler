@@ -133,7 +133,7 @@ void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, voi
 
   struct timespec start, end, diff;
   uint64_t us = 0;
-  void *(*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
+  void (*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
 
   // Get a pointer to the real ExpandPromise() function, to call it later
   ExpandPromise_orig = dlsym(RTLD_NEXT, "ExpandPromise");
