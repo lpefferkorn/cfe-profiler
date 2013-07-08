@@ -47,18 +47,9 @@ struct _bundle_stats {
 bundle_stats *bundles_stats = NULL;
 
 void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res);
-uint64_t rdtsc(void);
 void add_bundle_call(Promise *pp, uint64_t ticks);
 int sort_by_ticks(bundle_stats *a, bundle_stats *b);
 
-// rtdsc() credits: http://www.cs.wm.edu/~kearns/001lab.d/rdtsc.html
-uint64_t rdtsc(void)
-{
-  //uint64_t x;
-  unsigned a, d;
-  __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
-  return ((uint64_t)a) | (((uint64_t)d) << 32);;
-}
 
 void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res) {
 
