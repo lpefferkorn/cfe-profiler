@@ -70,7 +70,7 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
 
   hash = malloc(MAX_HASH_LEN);
   if (hash == NULL)
-    perror("Cannot allocate memory for hash\n");
+    err(1, "Cannot allocate memory for hash\n");
 
   snprintf(hash, MAX_HASH_LEN, "%s%s%s",
     pp->namespace,
@@ -81,6 +81,9 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
 
   if (bs == NULL) {
     bs = malloc(sizeof(*bs));
+    if (bs == NULL)
+     err(1, "Cannot allocate memory for bundle stats\n");
+
     bs->key = hash;
     bs->namespace = strdup(pp->namespace);
     bs->bundletype = strdup(pp->bundletype);
