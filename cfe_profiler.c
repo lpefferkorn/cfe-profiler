@@ -46,6 +46,7 @@ struct _bundle_stats {
 
 bundle_stats *bundles_stats = NULL;
 
+void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res);
 uint64_t rdtsc(void);
 void add_bundle_call(Promise *pp, uint64_t ticks);
 int sort_by_ticks(bundle_stats *a, bundle_stats *b);
@@ -57,6 +58,17 @@ uint64_t rdtsc(void)
   unsigned a, d;
   __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
   return ((uint64_t)a) | (((uint64_t)d) << 32);;
+}
+
+void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res) {
+
+  if (y->tv_nsec < x->tv_nsec) {
+    res->tv_nsec = x->tv_nsec - y->tv_nsec;
+    res->tv_sec = x->tv_sec - y->tv_sec;
+  } else {
+    res->tv_nsec = 1000000000 + y->tv_nsec - x->tv_nsec;
+    res->tv_sec = y->tv_sec + 1 - x->tv_sec;
+  }
 }
 
 // For each bundle, add an entry to a global hash
