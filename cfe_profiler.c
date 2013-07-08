@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <err.h>
 #include "uthash.h"
 #include "cfengine.h"
 
