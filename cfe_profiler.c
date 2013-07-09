@@ -63,6 +63,16 @@ void timespec_sub(const struct timespec *x, const struct timespec *y, struct tim
   }
 }
 
+void timespec_addto(struct timespec *x, const struct timespec *y) {
+
+    x->tv_sec += y->tv_sec;
+    x->tv_nsec += y->tv_nsec;
+    if ( x->tv_nsec >= 1000000000L) {
+      x->tv_sec ++;
+      x->tv_nsec -= 1000000000L;
+    }
+}
+
 // For each bundle, add an entry to a global hash
 void add_bundle_call(Promise *pp, uint64_t timing_us) {
 
