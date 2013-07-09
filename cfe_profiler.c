@@ -128,16 +128,17 @@ void print_stats() {
   }
 
   printf("\nCfe-profiler-0.1: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
-  printf("\n*** Sorted by CPU time - total CPU time: %.2fs ***\n", (float) total_time / 1000000);
-  printf("%%     time(s)   Namespace     Type      Bundle\n");
+  printf("\n*** Sorted by CPU time - total CPU time: %5.2fs ***\n", (float) timespec2ns(total_time) / NANOSECS_IN_SEC);
+  printf("%5s %8s %9s %15s %20s\n", 
+    "%", "time(s)", "Namespace", "Type", "Bundle");
 
   HASH_SORT(bundles_stats, sort_by_time);
 
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
 
-    printf("%-7.2f %-9.1f %-10s %-10s %-20s\n",
-      (float) bs->time_us / total_time * 100,
-      (float) bs->time_us / 1000000,
+    printf("%5.2f %8.2f %9s %15s %20s\n",
+      ((float) timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC)  / ((float) timespec2ns(total_time) / NANOSECS_IN_SEC ) * 100,
+      (float) timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC,
       bs->namespace,
       bs->bundletype,
       bs->bundle);
