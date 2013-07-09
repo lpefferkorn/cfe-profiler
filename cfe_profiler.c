@@ -49,9 +49,15 @@ struct _bundle_stats {
 
 bundle_stats *bundles_stats = NULL;
 
+uint64_t timespec2ns(struct timespec x);
 void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
 void add_bundle_call(Promise *pp, uint64_t timing);
 int sort_by_time(bundle_stats *a, bundle_stats *b);
+
+uint64_t timespec2ns(struct timespec x) {
+
+  return x.tv_sec * 1000000000L + x.tv_nsec;
+}
 
 void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
 
