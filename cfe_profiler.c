@@ -49,18 +49,17 @@ struct _bundle_stats {
 
 bundle_stats *bundles_stats = NULL;
 
-void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res);
+void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
 void add_bundle_call(Promise *pp, uint64_t timing);
 int sort_by_time(bundle_stats *a, bundle_stats *b);
 
-void timespec_substract(const struct timespec *x, const struct timespec *y, struct timespec *res) {
+void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
 
-  if (y->tv_nsec < x->tv_nsec) {
-    res->tv_nsec = x->tv_nsec - y->tv_nsec;
-    res->tv_sec = x->tv_sec - y->tv_sec;
-  } else {
-    res->tv_nsec = 1000000000 + y->tv_nsec - x->tv_nsec;
-    res->tv_sec = y->tv_sec + 1 - x->tv_sec;
+  res->tv_sec = x->tv_sec - y->tv_sec;
+  res->tv_nsec = x->tv_nsec - y->tv_nsec;
+  if (res->tv_nsec < 0) {
+    res->tv_sec--;
+    res->tv_nsec += 1000000000L;
   }
 }
 
