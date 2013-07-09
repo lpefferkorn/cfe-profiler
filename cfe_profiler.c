@@ -34,6 +34,7 @@
  */
 
 const int MAX_HASH_LEN = 1024;
+const uint64_t NANOSECS_IN_SEC = 1000000000L;
 
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
@@ -55,7 +56,7 @@ int sort_by_time(bundle_stats *a, bundle_stats *b);
 
 uint64_t timespec2ns(struct timespec x) {
 
-  return x.tv_sec * 1000000000L + x.tv_nsec;
+  return x.tv_sec * NANOSECS_IN_SEC + x.tv_nsec;
 }
 
 void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
@@ -64,7 +65,7 @@ void timespec_sub(const struct timespec *x, const struct timespec *y, struct tim
   res->tv_nsec = x->tv_nsec - y->tv_nsec;
   if (res->tv_nsec < 0) {
     res->tv_sec--;
-    res->tv_nsec += 1000000000L;
+    res->tv_nsec += NANOSECS_IN_SEC;
   }
 }
 
@@ -72,9 +73,9 @@ void timespec_addto(struct timespec *x, const struct timespec *y) {
 
     x->tv_sec += y->tv_sec;
     x->tv_nsec += y->tv_nsec;
-    if ( x->tv_nsec >= 1000000000L) {
+    if ( x->tv_nsec >= NANOSECS_IN_SEC) {
       x->tv_sec ++;
-      x->tv_nsec -= 1000000000L;
+      x->tv_nsec -= NANOSECS_IN_SEC;
     }
 }
 
