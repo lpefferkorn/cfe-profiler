@@ -5,7 +5,6 @@
 #include <err.h>
 #include "uthash.h"
 #include "cfengine.h"
-#include <sys/time.h>
 #include <time.h>
 
 #define __USE_GNU
