@@ -182,19 +182,3 @@ void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, voi
   timespec_sub(&end, &start, &diff);
   add_bundle_call(pp, diff);
 }
-
-// Our version of GenericDeInitialize(): a cleanup function we use to fire the output of statistics
-void GenericDeInitialize() {
-
-  void (*GenericDeInitialize_orig) ();
-  
-  GenericDeInitialize_orig = dlsym(RTLD_NEXT, "GenericDeInitialize");
-
-  if (GenericDeInitialize_orig == NULL) {
-    fprintf(stderr, "Cannot find GenericDeInitialize symbol, exiting...\n");
-    exit(EXIT_FAILURE);
-  }
-
-  GenericDeInitialize_orig();
-  print_stats();
-}
