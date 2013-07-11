@@ -154,7 +154,17 @@ int sort_by_time(bundle_stats *a, bundle_stats *b) {
 void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context) {
 
   struct timespec start, end, diff;
+  static int atexit_handler_registered = 0;
   void (*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
+
+  // Print statistics at the end of cf-agent execution
+  if (atexit_handler_registered == 0) {
+    if (atexit(print_stats) != 0) {
+      fprintf(stderr, "Cannot register atexit() handler\n");
+      exit(EXIT_FAILURE);
+    }
+    atexit_handler_registered = 1;
+  }
 
   // Get a pointer to the real ExpandPromise() function, to call it later
   ExpandPromise_orig = dlsym(RTLD_NEXT, "ExpandPromise");
