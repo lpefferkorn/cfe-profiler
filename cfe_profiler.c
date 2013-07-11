@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <err.h>
 #include "uthash.h"
 #include "cfengine.h"
+#include <time.h>
 
 #define __USE_GNU
 
@@ -32,42 +34,60 @@
  */
 
 const int MAX_HASH_LEN = 1024;
+const uint64_t NANOSECS_IN_SEC = 1000000000L;
 
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
-  char *key;      // Hash of the 4th next fields
+  char *key;          // Hash of the 4th next fields
   char *namespace;
   char *bundletype;
   char *bundle;
   char *agentsubtype;
-  uint64_t ticks;
+  struct timespec elapsed_time;   // Total time taken 
   UT_hash_handle hh;
 };
 
 bundle_stats *bundles_stats = NULL;
 
-uint64_t rdtsc(void);
-void add_bundle_call(Promise *pp, uint64_t ticks);
-int sort_by_ticks(bundle_stats *a, bundle_stats *b);
+uint64_t timespec2ns(struct timespec x);
+void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
+void add_bundle_call(Promise *pp, struct timespec elapsed_time);
+int sort_by_time(bundle_stats *a, bundle_stats *b);
 
-// rtdsc() credits: http://www.cs.wm.edu/~kearns/001lab.d/rdtsc.html
-uint64_t rdtsc(void)
-{
-  //uint64_t x;
-  unsigned a, d;
-  __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
-  return ((uint64_t)a) | (((uint64_t)d) << 32);;
+uint64_t timespec2ns(struct timespec x) {
+
+  return x.tv_sec * NANOSECS_IN_SEC + x.tv_nsec;
+}
+
+void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
+
+  res->tv_sec = x->tv_sec - y->tv_sec;
+  res->tv_nsec = x->tv_nsec - y->tv_nsec;
+  if (res->tv_nsec < 0) {
+    res->tv_sec--;
+    res->tv_nsec += NANOSECS_IN_SEC;
+  }
+}
+
+void timespec_addto(struct timespec *x, const struct timespec *y) {
+
+    x->tv_sec += y->tv_sec;
+    x->tv_nsec += y->tv_nsec;
+    if ( x->tv_nsec >= NANOSECS_IN_SEC) {
+      x->tv_sec ++;
+      x->tv_nsec -= NANOSECS_IN_SEC;
+    }
 }
 
 // For each bundle, add an entry to a global hash
-void add_bundle_call(Promise *pp, uint64_t ticks) {
+void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
 
   bundle_stats *bs = NULL;
   char *hash = NULL;
 
   hash = malloc(MAX_HASH_LEN);
   if (hash == NULL)
-    perror("Cannot allocate memory for hash\n");
+    err(1, "Cannot allocate memory for hash\n");
 
   snprintf(hash, MAX_HASH_LEN, "%s%s%s",
     pp->namespace,
@@ -78,14 +98,17 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
 
   if (bs == NULL) {
     bs = malloc(sizeof(*bs));
+    if (bs == NULL)
+     err(1, "Cannot allocate memory for bundle stats\n");
+
     bs->key = hash;
     bs->namespace = strdup(pp->namespace);
     bs->bundletype = strdup(pp->bundletype);
     bs->bundle = strdup(pp->bundle);
-    bs->ticks = ticks;
+    bs->elapsed_time = elapsed_time;
     HASH_ADD_KEYPTR(hh, bundles_stats, bs->key, strlen(bs->key), bs);
   } else {
-    bs->ticks += ticks;
+    timespec_addto(&bs->elapsed_time, &elapsed_time);
     free(hash);
   }
 }
@@ -94,60 +117,74 @@ void add_bundle_call(Promise *pp, uint64_t ticks) {
 void print_stats() {
 
   bundle_stats *bs = NULL;
-  uint64_t total_ticks = 0;
+  struct timespec total_time;
+
+  total_time.tv_sec = 0;
+  total_time.tv_nsec = 0;
 
   // Get CPU ticks used overall
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
-    total_ticks += bs->ticks;
+    timespec_addto(&total_time, &bs->elapsed_time);
   }
 
   printf("\nCfe-profiler-0.1: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
-  printf("\n*** Sorted by ticks - total CPU ticks: %lu ***\n", total_ticks);
-  printf("%6s %10s %10s %20s\n",
-      "%CPU","Namespace", "Type", "Bundle");
+  printf("\n*** Sorted by CPU time - total CPU time: %5.2fs ***\n", (float) timespec2ns(total_time) / NANOSECS_IN_SEC);
+  printf("%5s %8s %9s %15s %20s\n", 
+    "%", "time(s)", "Namespace", "Type", "Bundle");
 
-  HASH_SORT(bundles_stats, sort_by_ticks);
+  HASH_SORT(bundles_stats, sort_by_time);
 
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
 
-    printf("%6.2f %10s %10s %20s\n",
-      ((float) bs->ticks / total_ticks * 100),
+    printf("%5.2f %8.2f %9s %15s %20s\n",
+      ((float) timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC)  / ((float) timespec2ns(total_time) / NANOSECS_IN_SEC ) * 100,
+      (float) timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC,
       bs->namespace,
       bs->bundletype,
       bs->bundle);
   }
 }
 
-// Helper function to sort hash by ticks
-int sort_by_ticks(bundle_stats *a, bundle_stats *b) {
-  return (a->ticks <= b->ticks);
+// Helper function to sort hash by time taken
+int sort_by_time(bundle_stats *a, bundle_stats *b) {
+  return (timespec2ns(a->elapsed_time) <= timespec2ns(b->elapsed_time));
 }
 
 // Our version of ExpandPromise(): collect informations about promise, then run real ExpandPromise
 void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context) {
 
-  uint64_t start;
-  void *(*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
+  struct timespec start, end, diff;
+  void (*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
 
   // Get a pointer to the real ExpandPromise() function, to call it later
   ExpandPromise_orig = dlsym(RTLD_NEXT, "ExpandPromise");
 
-  // Get current CPU ticks
-  start = rdtsc();
+  if (ExpandPromise_orig == NULL) {
+    fprintf(stderr, "Cannot find ExpandPromise symbol, exiting...\n");
+    exit(EXIT_FAILURE);
+  }
 
+  clock_gettime(CLOCK_MONOTONIC, &start);
   ExpandPromise_orig(agent, scopeid, pp, fnptr, report_context);
+  clock_gettime(CLOCK_MONOTONIC, &end);
 
-  // Collect information about the execution
-  add_bundle_call(pp, rdtsc() - start);
-
+  // Compute time taken by the execution
+  timespec_sub(&end, &start, &diff);
+  add_bundle_call(pp, diff);
 }
 
 // Our version of GenericDeInitialize(): a cleanup function we use to fire the output of statistics
 void GenericDeInitialize() {
 
-  void *(*GenericDeInitialize_orig) ();
+  void (*GenericDeInitialize_orig) ();
   
   GenericDeInitialize_orig = dlsym(RTLD_NEXT, "GenericDeInitialize");
+
+  if (GenericDeInitialize_orig == NULL) {
+    fprintf(stderr, "Cannot find GenericDeInitialize symbol, exiting...\n");
+    exit(EXIT_FAILURE);
+  }
+
   GenericDeInitialize_orig();
   print_stats();
 }
