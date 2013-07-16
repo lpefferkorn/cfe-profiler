@@ -90,9 +90,9 @@ void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
     err(1, "Cannot allocate memory for hash\n");
 
   snprintf(hash, MAX_HASH_LEN, "%s%s%s",
-    pp->namespace,
-    pp->bundletype,
-    pp->bundle);
+    pp->parent_promise_type->parent_bundle->ns,
+    pp->parent_promise_type->parent_bundle->type,
+    pp->parent_promise_type->parent_bundle->name);
 
   HASH_FIND_STR(bundles_stats, hash, bs);
 
@@ -102,9 +102,9 @@ void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
      err(1, "Cannot allocate memory for bundle stats\n");
 
     bs->key = hash;
-    bs->namespace = strdup(pp->namespace);
-    bs->bundletype = strdup(pp->bundletype);
-    bs->bundle = strdup(pp->bundle);
+    bs->namespace = strdup(pp->parent_promise_type->parent_bundle->ns);
+    bs->bundletype = strdup(pp->parent_promise_type->parent_bundle->type);
+    bs->bundle = strdup(pp->parent_promise_type->parent_bundle->name);
     bs->elapsed_time = elapsed_time;
     HASH_ADD_KEYPTR(hh, bundles_stats, bs->key, strlen(bs->key), bs);
   } else {
