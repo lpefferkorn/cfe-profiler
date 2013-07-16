@@ -151,10 +151,9 @@ int sort_by_time(bundle_stats *a, bundle_stats *b) {
 }
 
 // Our version of ExpandPromise(): collect informations about promise, then run real ExpandPromise
-void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context) {
-
+void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise, void *para) { 
   struct timespec start, end, diff;
-  void (*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
+  void (*ExpandPromise_orig) (EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise, void *para);
 
   // Get a pointer to the real ExpandPromise() function, to call it later
   ExpandPromise_orig = dlsym(RTLD_NEXT, "ExpandPromise");
@@ -165,7 +164,7 @@ void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, voi
   }
 
   clock_gettime(CLOCK_MONOTONIC, &start);
-  ExpandPromise_orig(agent, scopeid, pp, fnptr, report_context);
+  ExpandPromise_orig(ctx, pp, ActOnPromise, para);
   clock_gettime(CLOCK_MONOTONIC, &end);
 
   // Compute time taken by the execution
