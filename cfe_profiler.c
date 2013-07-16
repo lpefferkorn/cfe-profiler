@@ -172,18 +172,19 @@ void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise,
   add_bundle_call(pp, diff);
 }
 
-// Our version of GenericDeInitialize(): a cleanup function we use to fire the output of statistics
-void GenericDeInitialize() {
+// Our version of GenericAgentConfigDestroy(), a cleanup function we use to fire the output of statistics
+void GenericAgentConfigDestroy(GenericAgentConfig *config) {
 
-  void (*GenericDeInitialize_orig) ();
+  void (*GenericAgentConfigDestroy_orig) ();
   
-  GenericDeInitialize_orig = dlsym(RTLD_NEXT, "GenericDeInitialize");
-
-  if (GenericDeInitialize_orig == NULL) {
-    fprintf(stderr, "Cannot find GenericDeInitialize symbol, exiting...\n");
+  GenericAgentConfigDestroy_orig = dlsym(RTLD_NEXT, "GenericAgentConfigDestroy");
+  
+  // TODO: move outside of this function, or will never be tested...
+  if (GenericAgentConfigDestroy_orig == NULL) {
+    fprintf(stderr, "Cannot find GenericAgentConfigDestroy symbol, exiting...\n");
     exit(EXIT_FAILURE);
   }
 
-  GenericDeInitialize_orig();
+  GenericAgentConfigDestroy_orig();
   print_stats();
 }
