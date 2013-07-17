@@ -36,6 +36,9 @@
 const int MAX_HASH_LEN = 1024;
 const uint64_t NANOSECS_IN_SEC = 1000000000L;
 
+// man program_invocation_name, GNU extension
+extern char *program_invocation_short_name;
+
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
   char *key;          // Hash of the 4th next fields
@@ -115,6 +118,11 @@ void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
 
 // Display bundle execution statistics
 void print_stats() {
+
+  // Statistics are only relevant while overriding ExpandPromise() in cf-agent 
+  if (strcmp(program_invocation_short_name, "cf-agent") != 0 ) {
+    return;
+  }
 
   bundle_stats *bs = NULL;
   struct timespec total_time;
