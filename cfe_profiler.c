@@ -172,19 +172,3 @@ void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise,
   add_bundle_call(pp, diff);
 }
 
-// Our version of GenericAgentConfigDestroy(), a cleanup function we use to fire the output of statistics
-void GenericAgentConfigDestroy(GenericAgentConfig *config) {
-
-  void (*GenericAgentConfigDestroy_orig) ();
-  
-  GenericAgentConfigDestroy_orig = dlsym(RTLD_NEXT, "GenericAgentConfigDestroy");
-  
-  // TODO: move outside of this function, or will never be tested...
-  if (GenericAgentConfigDestroy_orig == NULL) {
-    fprintf(stderr, "Cannot find GenericAgentConfigDestroy symbol, exiting...\n");
-    exit(EXIT_FAILURE);
-  }
-
-  GenericAgentConfigDestroy_orig();
-  print_stats();
-}
