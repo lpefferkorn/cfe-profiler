@@ -45,7 +45,6 @@ struct _bundle_stats {
   char *namespace;
   char *bundletype;
   char *bundle;
-  char *agentsubtype;
   struct timespec elapsed_time;   // Total time taken 
   UT_hash_handle hh;
 };
@@ -189,4 +188,3 @@ void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise,
   timespec_sub(&end, &start, &diff);
   add_bundle_call(pp, diff);
 }
-
