@@ -137,7 +137,7 @@ void print_stats() {
   printf("\nCfe-profiler-0.1: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
   puts("\n*** Sorted by wall-clock time ***\n");
   printf("%7s %9s %15s %20s\n", 
-    "time(s)", "Namespace", "Type", "Bundle");
+    "Time(s)", "Namespace", "Type", "Bundle");
 
   HASH_SORT(bundles_stats, sort_by_time);
 
