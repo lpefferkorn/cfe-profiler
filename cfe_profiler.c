@@ -44,7 +44,7 @@ struct _bundle_stats {
   char *key;          // Hash of the 4th next fields
   char *namespace;
   char *bundletype;
-  char *bundle;
+  char *name;
   struct timespec elapsed_time;   // Total time taken 
   UT_hash_handle hh;
 };
@@ -106,7 +106,7 @@ void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
     bs->key = hash;
     bs->namespace = strdup(pp->parent_promise_type->parent_bundle->ns);
     bs->bundletype = strdup(pp->parent_promise_type->parent_bundle->type);
-    bs->bundle = strdup(pp->parent_promise_type->parent_bundle->name);
+    bs->name = strdup(pp->parent_promise_type->parent_bundle->name);
     bs->elapsed_time = elapsed_time;
     HASH_ADD_KEYPTR(hh, bundles_stats, bs->key, strlen(bs->key), bs);
   } else {
@@ -148,7 +148,7 @@ void print_stats() {
       (float) timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC,
       bs->namespace,
       bs->bundletype,
-      bs->bundle);
+      bs->name);
   }
 }
 
