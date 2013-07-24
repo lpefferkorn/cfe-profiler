@@ -54,7 +54,7 @@ bundle_stats *bundles_stats = NULL;
 uint64_t cfep_timespec2ns(struct timespec x);
 void cfep_timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
 void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time);
-int sort_by_time(bundle_stats *a, bundle_stats *b);
+int cfep_sort_by_time(bundle_stats *a, bundle_stats *b);
 
 uint64_t cfep_timespec2ns(struct timespec x) {
 
@@ -139,7 +139,7 @@ void print_stats() {
   printf("%7s %9s %15s %20s\n", 
     "Time(s)", "Namespace", "Type", "Bundle");
 
-  HASH_SORT(bundles_stats, sort_by_time);
+  HASH_SORT(bundles_stats, cfep_sort_by_time);
 
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
 
@@ -152,7 +152,7 @@ void print_stats() {
 }
 
 // Helper function to sort hash by time taken
-int sort_by_time(bundle_stats *a, bundle_stats *b) {
+int cfep_sort_by_time(bundle_stats *a, bundle_stats *b) {
   return (cfep_timespec2ns(a->elapsed_time) <= cfep_timespec2ns(b->elapsed_time));
 }
 
