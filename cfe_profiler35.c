@@ -53,7 +53,7 @@ bundle_stats *bundles_stats = NULL;
 
 uint64_t cfep_timespec2ns(struct timespec x);
 void cfep_timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
-void add_bundle_call(Promise *pp, struct timespec elapsed_time);
+void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time);
 int sort_by_time(bundle_stats *a, bundle_stats *b);
 
 uint64_t cfep_timespec2ns(struct timespec x) {
@@ -82,7 +82,7 @@ void timespec_addto(struct timespec *x, const struct timespec *y) {
 }
 
 // For each bundle, add an entry to a global hash
-void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
+void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time) {
 
   bundle_stats *bs = NULL;
   char *hash = NULL;
@@ -185,5 +185,5 @@ void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise,
 
   // Compute time taken by the execution
   cfep_timespec_sub(&end, &start, &diff);
-  add_bundle_call(pp, diff);
+  cfep_add_bundle_call(pp, diff);
 }
