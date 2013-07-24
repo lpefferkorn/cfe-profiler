@@ -52,7 +52,7 @@ struct _bundle_stats {
 bundle_stats *bundles_stats = NULL;
 
 uint64_t cfep_timespec2ns(struct timespec x);
-void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
+void cfep_timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
 void add_bundle_call(Promise *pp, struct timespec elapsed_time);
 int sort_by_time(bundle_stats *a, bundle_stats *b);
 
@@ -61,7 +61,7 @@ uint64_t cfep_timespec2ns(struct timespec x) {
   return x.tv_sec * NANOSECS_IN_SEC + x.tv_nsec;
 }
 
-void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
+void cfep_timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
 
   res->tv_sec = x->tv_sec - y->tv_sec;
   res->tv_nsec = x->tv_nsec - y->tv_nsec;
@@ -185,6 +185,6 @@ void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, voi
   clock_gettime(CLOCK_MONOTONIC, &end);
 
   // Compute time taken by the execution
-  timespec_sub(&end, &start, &diff);
+  cfep_timespec_sub(&end, &start, &diff);
   add_bundle_call(pp, diff);
 }
