@@ -2,6 +2,7 @@
 
 Cfe-profiler is a CFEngine bundles profiler.
 It measures their execution time, helping you to find which bundles are the top time consumers.
+
 If a bundle calls others bundles (through methods:), its total time will be the sum of all the called bundles.
 
 Sample policy:
@@ -49,7 +50,7 @@ Output of cfe-profiler:
 
 # Usage
 
-* Set LD_PRELOAD and run cf-agent as usual, statistics will be displayed at the end of cf-agent execution:
+* Set LD_PRELOAD environment variable and run cf-agent as usual, statistics will be displayed at the end of cf-agent execution:
 
     LD_PRELOAD=/path/to/cfe_profiler35.so cf-agent
 
