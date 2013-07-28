@@ -2,8 +2,13 @@ VERSION	= 0.1
 CC	= gcc
 CFLAGS	= -Wall -shared -fPIC -ggdb
 
-cfe_profiler.so: cfe_profiler.c
-	$(CC) $(CFLAGS) cfe_profiler.c -o $@
+all: cfe_profiler34.so cfe_profiler35.so
+
+cfe_profiler34.so: cfe_profiler34.c
+	$(CC) $(CFLAGS) cfe_profiler34.c -o $@
+
+cfe_profiler35.so: cfe_profiler35.c
+	$(CC) $(CFLAGS) cfe_profiler35.c -o $@
 
 clean:
-	rm -f cfe_profiler.so
+	rm -f cfe_profiler34.so cfe_profiler35.so

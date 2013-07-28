@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <err.h>
 #include "uthash.h"
-#include "cfengine.h"
+#include "cfengine35.h"
 #include <time.h>
 
 #define __USE_GNU
@@ -36,30 +36,32 @@
 const int MAX_HASH_LEN = 1024;
 const uint64_t NANOSECS_IN_SEC = 1000000000L;
 
+// man program_invocation_name, GNU extension
+extern char *program_invocation_short_name;
+
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
   char *key;          // Hash of the 4th next fields
   char *namespace;
   char *bundletype;
-  char *bundle;
-  char *agentsubtype;
+  char *name;
   struct timespec elapsed_time;   // Total time taken 
   UT_hash_handle hh;
 };
 
 bundle_stats *bundles_stats = NULL;
 
-uint64_t timespec2ns(struct timespec x);
-void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
-void add_bundle_call(Promise *pp, struct timespec elapsed_time);
-int sort_by_time(bundle_stats *a, bundle_stats *b);
+uint64_t cfep_timespec2ns(struct timespec x);
+void cfep_timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
+void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time);
+int cfep_sort_by_time(bundle_stats *a, bundle_stats *b);
 
-uint64_t timespec2ns(struct timespec x) {
+uint64_t cfep_timespec2ns(struct timespec x) {
 
   return x.tv_sec * NANOSECS_IN_SEC + x.tv_nsec;
 }
 
-void timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
+void cfep_timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res) {
 
   res->tv_sec = x->tv_sec - y->tv_sec;
   res->tv_nsec = x->tv_nsec - y->tv_nsec;
@@ -80,7 +82,7 @@ void timespec_addto(struct timespec *x, const struct timespec *y) {
 }
 
 // For each bundle, add an entry to a global hash
-void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
+void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time) {
 
   bundle_stats *bs = NULL;
   char *hash = NULL;
@@ -90,9 +92,9 @@ void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
     err(1, "Cannot allocate memory for hash\n");
 
   snprintf(hash, MAX_HASH_LEN, "%s%s%s",
-    pp->namespace,
-    pp->bundletype,
-    pp->bundle);
+    pp->parent_promise_type->parent_bundle->ns,
+    pp->parent_promise_type->parent_bundle->type,
+    pp->parent_promise_type->parent_bundle->name);
 
   HASH_FIND_STR(bundles_stats, hash, bs);
 
@@ -102,9 +104,9 @@ void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
      err(1, "Cannot allocate memory for bundle stats\n");
 
     bs->key = hash;
-    bs->namespace = strdup(pp->namespace);
-    bs->bundletype = strdup(pp->bundletype);
-    bs->bundle = strdup(pp->bundle);
+    bs->namespace = strdup(pp->parent_promise_type->parent_bundle->ns);
+    bs->bundletype = strdup(pp->parent_promise_type->parent_bundle->type);
+    bs->name = strdup(pp->parent_promise_type->parent_bundle->name);
     bs->elapsed_time = elapsed_time;
     HASH_ADD_KEYPTR(hh, bundles_stats, bs->key, strlen(bs->key), bs);
   } else {
@@ -115,6 +117,11 @@ void add_bundle_call(Promise *pp, struct timespec elapsed_time) {
 
 // Display bundle execution statistics
 void print_stats() {
+
+  // Statistics are only relevant while overriding ExpandPromise() in cf-agent 
+  if (strcmp(program_invocation_short_name, "cf-agent") != 0 ) {
+    return;
+  }
 
   bundle_stats *bs = NULL;
   struct timespec total_time;
@@ -127,34 +134,42 @@ void print_stats() {
     timespec_addto(&total_time, &bs->elapsed_time);
   }
 
-  printf("\nCfe-profiler-0.1: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
-  printf("\n*** Sorted by CPU time - total CPU time: %5.2fs ***\n", (float) timespec2ns(total_time) / NANOSECS_IN_SEC);
-  printf("%5s %8s %9s %15s %20s\n", 
-    "%", "time(s)", "Namespace", "Type", "Bundle");
+  printf("\nCfe-profiler-0.2: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
+  puts("\n*** Sorted by wall-clock time ***\n");
+  printf("%7s %9s %15s %20s\n", 
+    "Time(s)", "Namespace", "Type", "Bundle");
 
-  HASH_SORT(bundles_stats, sort_by_time);
+  HASH_SORT(bundles_stats, cfep_sort_by_time);
 
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
 
-    printf("%5.2f %8.2f %9s %15s %20s\n",
-      ((float) timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC)  / ((float) timespec2ns(total_time) / NANOSECS_IN_SEC ) * 100,
-      (float) timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC,
+    printf("%7.2f %9s %15s %20s\n",
+      (float) cfep_timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC,
       bs->namespace,
       bs->bundletype,
-      bs->bundle);
+      bs->name);
   }
 }
 
 // Helper function to sort hash by time taken
-int sort_by_time(bundle_stats *a, bundle_stats *b) {
-  return (timespec2ns(a->elapsed_time) <= timespec2ns(b->elapsed_time));
+int cfep_sort_by_time(bundle_stats *a, bundle_stats *b) {
+  return (cfep_timespec2ns(a->elapsed_time) <= cfep_timespec2ns(b->elapsed_time));
 }
 
 // Our version of ExpandPromise(): collect informations about promise, then run real ExpandPromise
-void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context) {
-
+void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise, void *para) { 
   struct timespec start, end, diff;
-  void (*ExpandPromise_orig) (enum cfagenttype agent, const char *scopeid, Promise *pp, void *fnptr, const ReportContext *report_context);
+  static int atexit_handler_registered = 0;
+  void (*ExpandPromise_orig) (EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise, void *para);
+
+  // Print statistics at the end of cf-agent execution
+  if (atexit_handler_registered == 0) {
+    if (atexit(print_stats) != 0) {
+      fprintf(stderr, "Cannot register atexit() handler\n");
+      exit(EXIT_FAILURE);
+    }   
+    atexit_handler_registered = 1;
+  }
 
   // Get a pointer to the real ExpandPromise() function, to call it later
   ExpandPromise_orig = dlsym(RTLD_NEXT, "ExpandPromise");
@@ -165,26 +180,10 @@ void ExpandPromise(enum cfagenttype agent, const char *scopeid, Promise *pp, voi
   }
 
   clock_gettime(CLOCK_MONOTONIC, &start);
-  ExpandPromise_orig(agent, scopeid, pp, fnptr, report_context);
+  ExpandPromise_orig(ctx, pp, ActOnPromise, para);
   clock_gettime(CLOCK_MONOTONIC, &end);
 
   // Compute time taken by the execution
-  timespec_sub(&end, &start, &diff);
-  add_bundle_call(pp, diff);
-}
-
-// Our version of GenericDeInitialize(): a cleanup function we use to fire the output of statistics
-void GenericDeInitialize() {
-
-  void (*GenericDeInitialize_orig) ();
-  
-  GenericDeInitialize_orig = dlsym(RTLD_NEXT, "GenericDeInitialize");
-
-  if (GenericDeInitialize_orig == NULL) {
-    fprintf(stderr, "Cannot find GenericDeInitialize symbol, exiting...\n");
-    exit(EXIT_FAILURE);
-  }
-
-  GenericDeInitialize_orig();
-  print_stats();
+  cfep_timespec_sub(&end, &start, &diff);
+  cfep_add_bundle_call(pp, diff);
 }
