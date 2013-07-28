@@ -45,7 +45,7 @@ Output of cfe-profiler:
 # Requirement
 
 * A supported CFEngine version (see below)
-* Adequate environement to compile cfe-profiler
+* Adequate environment to compile cfe-profiler
 * A cf-agent binary dynamically linked against libpromises.so (`ldd /path/to/cf-agent|grep -q libpromises.so && echo "cf-agent OK"`)
 
 # Usage
