@@ -1,2 +1,8 @@
+0.2 / 2013-07-28 / lpefferkorn
+  - Support for CFEngine-3.5 (issue #3)
+  - Fixed segfault (issue #4)
+  - Fixed multiple reports (issue #5)
+
+
 0.1 / 2013-06-25 / lpefferkorn
   - First public version
