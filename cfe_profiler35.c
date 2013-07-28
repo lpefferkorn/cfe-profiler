@@ -134,7 +134,7 @@ void print_stats() {
     timespec_addto(&total_time, &bs->elapsed_time);
   }
 
-  printf("\nCfe-profiler-0.1: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
+  printf("\nCfe-profiler-0.2: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
   puts("\n*** Sorted by wall-clock time ***\n");
   printf("%7s %9s %15s %20s\n", 
     "Time(s)", "Namespace", "Type", "Bundle");
