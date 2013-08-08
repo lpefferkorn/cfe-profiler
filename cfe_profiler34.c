@@ -39,6 +39,11 @@ const uint64_t NANOSECS_IN_SEC = 1000000000L;
 // man program_invocation_name, GNU extension
 extern char *program_invocation_short_name;
 
+// For compliance summary
+int PR_KEPT;
+int PR_REPAIRED;
+int PR_NOTKEPT;
+
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
   char *key;          // Hash of the 4th next fields
@@ -123,6 +128,7 @@ void print_stats() {
     return;
   }
 
+  int total_promises;
   bundle_stats *bs = NULL;
   struct timespec total_time;
 
@@ -149,6 +155,13 @@ void print_stats() {
       bs->bundletype,
       bs->name);
   }
+
+  total_promises = PR_KEPT + PR_NOTKEPT + PR_REPAIRED;
+  printf("\n*** Promises compliance ***\n   %-10s%4i (%6.2f%%)\n   %-10s%4i (%6.2f%%)\n   %-10s%4i (%6.2f%%)\n   %-10s%4i\n",
+        "kept:", PR_KEPT, (double) PR_KEPT / total_promises * 100,
+        "notkept:", PR_NOTKEPT, (double) PR_NOTKEPT / total_promises * 100,
+        "repaired:", PR_REPAIRED, (double) PR_REPAIRED / total_promises * 100,
+        "total", total_promises); 
 }
 
 // Helper function to sort hash by time taken
