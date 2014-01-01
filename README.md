@@ -59,5 +59,5 @@ Depending your CFEngine version (3.4.x or 3.5.x), use the appropriate file (cfe_
 # Supported CFEngine versions
 
 *  3.4.x
-*  3.5 up to 3.5.1
+*  3.5 up to 3.5.3
 
