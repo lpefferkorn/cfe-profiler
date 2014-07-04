@@ -60,4 +60,5 @@ Depending your CFEngine version (3.4.x or 3.5.x), use the appropriate file (cfe_
 
 *  3.4.x
 *  3.5 up to 3.5.3
+*  cfe-profiler is going to be [bundled with CFEngine-3.6.x](https://dev.cfengine.com/issues/3607)
 
