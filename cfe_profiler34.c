@@ -45,7 +45,7 @@ struct _bundle_stats {
   char *namespace;
   char *bundletype;
   char *name;
-  struct timespec elapsed_time;   // Total time taken 
+  struct timespec elapsed_time;   // Total time taken
   UT_hash_handle hh;
 };
 
@@ -118,7 +118,7 @@ void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time) {
 // Display bundle execution statistics
 void print_stats() {
 
-  // Statistics are only relevant while overriding ExpandPromise() in cf-agent 
+  // Statistics are only relevant while overriding ExpandPromise() in cf-agent
   if (strcmp(program_invocation_short_name, "cf-agent") != 0 ) {
     return;
   }
@@ -136,7 +136,7 @@ void print_stats() {
 
   printf("\nCfe-profiler-0.2: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
   puts("\n*** Sorted by wall-clock time ***\n");
-  printf("%7s %9s %15s %20s\n", 
+  printf("%7s %9s %15s %20s\n",
     "Time(s)", "Namespace", "Type", "Bundle");
 
   HASH_SORT(bundles_stats, cfep_sort_by_time);
