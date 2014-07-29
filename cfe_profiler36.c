@@ -33,6 +33,8 @@
  *
  */
 
+const char cfe_profiler_version[] = "0.3";
+
 const int MAX_HASH_LEN = 1024;
 const uint64_t NANOSECS_IN_SEC = 1000000000L;
 
@@ -134,7 +136,8 @@ void print_stats() {
     timespec_addto(&total_time, &bs->elapsed_time);
   }
 
-  printf("\nCfe-profiler-0.2: a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n");
+  printf("\nCfe-profiler %s : a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n",
+          cfe_profiler_version);
   puts("\n*** Sorted by wall-clock time ***\n");
   printf("%7s %9s %15s %20s\n",
     "Time(s)", "Namespace", "Type", "Bundle");
