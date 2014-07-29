@@ -53,7 +53,7 @@ bundle_stats *bundles_stats = NULL;
 
 uint64_t cfep_timespec2ns(struct timespec x);
 void cfep_timespec_sub(const struct timespec *x, const struct timespec *y, struct timespec *res);
-void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time);
+void cfep_add_bundle_call(const Promise *pp, struct timespec elapsed_time);
 int cfep_sort_by_time(bundle_stats *a, bundle_stats *b);
 
 uint64_t cfep_timespec2ns(struct timespec x) {
@@ -82,7 +82,7 @@ void timespec_addto(struct timespec *x, const struct timespec *y) {
 }
 
 // For each bundle, add an entry to a global hash
-void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time) {
+void cfep_add_bundle_call(const Promise *pp, struct timespec elapsed_time) {
 
   bundle_stats *bs = NULL;
   char *hash = NULL;
@@ -157,10 +157,11 @@ int cfep_sort_by_time(bundle_stats *a, bundle_stats *b) {
 }
 
 // Our version of ExpandPromise(): collect informations about promise, then run real ExpandPromise
-void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise, void *para) {
+PromiseResult ExpandPromise(EvalContext *ctx, const Promise *pp, PromiseActuator *ActOnPromise, void *para) {
   struct timespec start, end, diff;
   static int atexit_handler_registered = 0;
-  void (*ExpandPromise_orig) (EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise, void *para);
+  PromiseResult rc;
+  PromiseResult (*ExpandPromise_orig) (EvalContext *ctx, const Promise *pp, PromiseActuator *ActOnPromise, void *para);
 
   // Print statistics at the end of cf-agent execution
   if (atexit_handler_registered == 0) {
@@ -180,10 +181,12 @@ void ExpandPromise(EvalContext *ctx, Promise *pp, PromiseActuator *ActOnPromise,
   }
 
   clock_gettime(CLOCK_MONOTONIC, &start);
-  ExpandPromise_orig(ctx, pp, ActOnPromise, para);
+  rc = ExpandPromise_orig(ctx, pp, ActOnPromise, para);
   clock_gettime(CLOCK_MONOTONIC, &end);
 
   // Compute time taken by the execution
   cfep_timespec_sub(&end, &start, &diff);
   cfep_add_bundle_call(pp, diff);
+
+  return rc;
 }
