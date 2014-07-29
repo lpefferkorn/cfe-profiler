@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <err.h>
 #include "uthash.h"
-#include "cfengine35.h"
+#include "cfengine36.h"
 #include <time.h>
 
 #define __USE_GNU
