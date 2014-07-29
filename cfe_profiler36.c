@@ -139,14 +139,14 @@ void print_stats() {
   printf("\nCfe-profiler %s : a CFEngine profiler - http://www.loicp.eu/cfe-profiler\n",
           cfe_profiler_version);
   puts("\n*** Sorted by wall-clock time ***\n");
-  printf("%7s %9s %15s %20s\n",
+  printf("%7s %-9s %-15s %s\n",
     "Time(s)", "Namespace", "Type", "Bundle");
 
   HASH_SORT(bundles_stats, cfep_sort_by_time);
 
   for(bs=bundles_stats; bs != NULL; bs=(bundle_stats *)(bs->hh.next)) {
 
-    printf("%7.2f %9s %15s %20s\n",
+    printf("%7.2f %-9s %-15s %-s\n",
       (float) cfep_timespec2ns(bs->elapsed_time) / NANOSECS_IN_SEC,
       bs->namespace,
       bs->bundletype,
