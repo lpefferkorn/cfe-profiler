@@ -1,3 +1,6 @@
+#if defined(__FreeBSD__)
+#include <sys/stat.h>
+#endif
 
 typedef struct Policy_ Policy;
 typedef struct Bundle_ Bundle;

@@ -1,3 +1,6 @@
+#if defined(__FreeBSD__)
+#include <sys/stat.h>
+#endif
 
 // Stripped down version of cf3.defs.h retrieved from https://github.com/cfengine/core/blob/master/libpromises/cf3.defs.h
 
