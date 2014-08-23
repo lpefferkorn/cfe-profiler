@@ -9,6 +9,7 @@
 
 #define __USE_GNU
 
+#include <errno.h> // for program_invocation_short_name
 #include <dlfcn.h> // for dlsym()
 
 /*
@@ -37,9 +38,6 @@ const char cfe_profiler_version[] = "0.3";
 
 const int MAX_HASH_LEN = 1024;
 const uint64_t NANOSECS_IN_SEC = 1000000000L;
-
-// man program_invocation_name, GNU extension
-extern char *program_invocation_short_name;
 
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
@@ -121,7 +119,11 @@ void cfep_add_bundle_call(Promise *pp, struct timespec elapsed_time) {
 void print_stats() {
 
   // Statistics are only relevant while overriding ExpandPromise() in cf-agent
+#if defined(__FreeBSD__)
+  if (strcmp(getprogname(), "cf-agent") != 0) {
+#else
   if (strcmp(program_invocation_short_name, "cf-agent") != 0 ) {
+#endif
     return;
   }
 
