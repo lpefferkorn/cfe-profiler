@@ -9,6 +9,7 @@
 
 #define __USE_GNU
 
+#include <errno.h> // for program_invocation_short_name
 #include <dlfcn.h> // for dlsym()
 
 /*
@@ -37,11 +38,6 @@ const char cfe_profiler_version[] = "0.3";
 
 const int MAX_HASH_LEN = 1024;
 const uint64_t NANOSECS_IN_SEC = 1000000000L;
-
-#if defined(_GNU_SOURCE)
-// man program_invocation_name, GNU extension
-extern char *program_invocation_short_name;
-#endif
 
 typedef struct _bundle_stats bundle_stats;
 struct _bundle_stats {
